@@ -66,7 +66,7 @@ class ODrive {
         bool runIdle(uint8_t axis);
         bool runFullCalibration(uint8_t axis);
         bool runClosedLoopControl(uint8_t axis);
-        bool runHoming(uint8_t axis);
+        bool runHoming(uint8_t axis, float homingVelocity, float homingOffset);
         void clearErrors();                     // clears errors if any
 
         void setControlMode(uint8_t axis, uint8_t mode);

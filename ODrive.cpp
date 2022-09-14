@@ -131,6 +131,8 @@ bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encod
         myUSBSerial.print(sentData);
     }
 
+    delay(100);  // seems to be necessary to not overload serial prints and comms
+
     mySerial << "r axis" << axis << ".encoder.is_ready\n";
     int encoderCalibration = ODrive::readInt();
 
@@ -209,7 +211,7 @@ bool ODrive::runState(uint8_t axis, uint8_t requested_state, bool wait_for_idle,
 }
 
 bool ODrive::runIdle(uint8_t axis) {
-    bool success =  ODrive::runState(axis, 1, true, 3.0f);
+    bool success =  ODrive::runState(axis, 1, true, 10.0f);
 
     if (success) {
         snprintf(sentData, sizeof(sentData), "Axis %d in idle state.\n", axis+1);
@@ -243,16 +245,62 @@ bool ODrive::runClosedLoopControl(uint8_t axis) {
     
     if (success) {
         snprintf(sentData, sizeof(sentData), "Axis %d in closed-loop control.\n", axis+1);
-        myUSBSerial.print(sentData);    
+        myUSBSerial.print(sentData);
     } else {
         snprintf(sentData, sizeof(sentData), "Axis %d failed to enter closed-loop control.\n", axis+1);
-        myUSBSerial.print(sentData);    
+        myUSBSerial.print(sentData);
     }
     return success;
 }
 
-bool ODrive::runHoming(uint8_t axis) {
-    return ODrive::runState(axis, 11, true, 30.0f);
+bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
+    // return ODrive::runState(axis, 11, true, 30.0f);      // ODrive's homing feature requires limit sensors
+    snprintf(sentData, sizeof(sentData), "Homing axis %d...\n", axis+1);
+    myUSBSerial.print(sentData);
+
+    // switch to velocity control mode for homing
+    ODrive::setControlMode(axis, 2);    // velocity control
+    ODrive::setInputMode(axis, 1);      // passthrough input
+    snprintf(sentData, sizeof(sentData), "Control mode set to velocity control.\nInput mode set to passthrough.\n\n");
+    myUSBSerial.print(sentData);
+
+    if (ODrive::runClosedLoopControl(axis)) {
+        snprintf(sentData, sizeof(sentData), "%f %f\n", ODrive::getPosition(axis), ODrive::getVelocity(axis));
+        myUSBSerial.print(sentData);
+        ODrive::setVelocity(axis, homingVelocity);      // move slowly towards the joint limit
+        snprintf(sentData, sizeof(sentData), "Moving to joint limit...\n\n");
+        myUSBSerial.print(sentData);
+        delay(300);                                     // don't check endstop condition when the motor starts
+        while (true) {
+            if (abs(ODrive::getVelocity(axis)) < 0.05) { // if the motor has slowed due to the joint limit
+                myUSBSerial.print("At joint limit.\n");
+                ODrive::setVelocity(axis, 0);           // stop the motor
+                ODrive::setControlMode(axis, 3);        // position control
+                ODrive::setInputMode(axis, 5);          // trapezoidal trajectory input
+                myUSBSerial.print("Moving to homing offset...\n\n");
+
+                snprintf(sentData, sizeof(sentData), "Currently at position: %f\n", ODrive::getPosition(axis));
+                myUSBSerial.print(sentData);
+                float newPos = ODrive::getPosition(axis) + homingOffset;
+                snprintf(sentData, sizeof(sentData), "Moving to: %f\n", newPos);
+                myUSBSerial.print(sentData);
+                ODrive::setPosition(axis, newPos);    // move to the homing offset position
+                while (abs(ODrive::getPosition(axis) - newPos) > 0.1) {    // wait for the motor to move to the offset
+                }
+                ODrive::runIdle(axis);  // enter idle mode after homing
+
+                snprintf(sentData, sizeof(sentData), "Axis %d successfully homed.\n\n", axis+1);
+                myUSBSerial.print(sentData);
+                return true;
+            }
+            delay(50);  // querying too often can miss the data
+        }
+    } else{
+        return false;
+    }
+    
+
+
 }
 
 void ODrive::clearErrors() {                     // clears any ODrive errors
