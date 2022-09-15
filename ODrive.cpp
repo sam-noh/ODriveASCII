@@ -4,9 +4,8 @@ template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(a
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
 // alternate constructor
-ODrive::ODrive(usb_serial_class & usbSerial, HardwareSerial & serial, uint32_t baud): myUSBSerial(usbSerial), mySerial(serial) {
-    // USB serial begin is run once in the main code, not here
-    mySerial.begin(baud);
+ODrive::ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial): mySerial(serial), myUSBSerial(usbSerial) {
+    mySerial.begin(baud);   // usb_serial_class.begin() is run once in the main code, not here
 }
 
 // helper functions
@@ -39,11 +38,12 @@ int32_t ODrive::readInt() {
 
 // system behaviors
 bool ODrive::ready() {              // checks for calibration of both axes and enters closed-loop control
-    if (ODrive::isCalibrated(0) & ODrive::isCalibrated(1)) {
-        return ODrive::runClosedLoopControl(0) & ODrive::runClosedLoopControl(1);
-    } else {
-        return false;
-    }
+    return ODrive::isCalibrated(0) & ODrive::isCalibrated(1);
+    // if (ODrive::isCalibrated(0) & ODrive::isCalibrated(1)) {
+    //     return ODrive::runClosedLoopControl(0) & ODrive::runClosedLoopControl(1);
+    // } else {
+    //     return false;
+    // }
 }
 
 bool ODrive::stop() {               // enters idle state on both axes
@@ -129,7 +129,7 @@ bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encod
         myUSBSerial.print(sentData);
     }
 
-    delay(100);  // seems to be necessary to not overload serial prints and comms
+    delay(50);  // seems to be necessary to not overload serial prints and comms
 
     mySerial << "r axis" << axis << ".encoder.is_ready\n";
     int encoderCalibration = ODrive::readInt();
@@ -283,7 +283,9 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
                 snprintf(sentData, sizeof(sentData), "Moving to: %f\n", newPos);
                 myUSBSerial.print(sentData);
                 ODrive::setPosition(axis, newPos);    // move to the homing offset position
-                while (abs(ODrive::getPosition(axis) - newPos) > 0.1) {    // wait for the motor to move to the offset
+                delay(200);
+                while (abs(ODrive::getPosition(axis) - newPos) > 0.15) {    // wait for the motor to move to the offset
+                    delay(10);
                 }
                 ODrive::runIdle(axis);  // enter idle mode after homing
 
@@ -291,7 +293,7 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
                 myUSBSerial.print(sentData);
                 return true;
             }
-            delay(50);  // querying too often can miss the data
+            delay(10);  // querying too often can miss the data
         }
     } else{
         return false;

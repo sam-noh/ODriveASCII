@@ -7,14 +7,14 @@
 class ODrive {
 
     private:
-        usb_serial_class & myUSBSerial;
         HardwareSerial & mySerial;
+        usb_serial_class & myUSBSerial;
         char sentData[128] = "";
 
         String readString();
 
     public:
-        ODrive(usb_serial_class & usbSerial, HardwareSerial & serial, uint32_t baud);
+        ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial);
 
         // helper functions
         float readFloat();

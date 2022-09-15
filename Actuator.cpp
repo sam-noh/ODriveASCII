@@ -2,20 +2,37 @@
 
 // alternate constructor
 Actuator::Actuator(const ODrive & givenODrive, uint8_t givenAxis, usb_serial_class & usbSerial): myODrive(givenODrive), axis(givenAxis), myUSBSerial(usbSerial) {
-    position = 0;
+    pos_abs = 0;
+    pos_rel = 0;
+    pos_home = 0;
     velocity = 0;
     current = 0;
     torque = 0;
+    homed = false;
     error = 0;
 }
 
+bool Actuator::enable() {
+    return myODrive.runClosedLoopControl(axis);
+}
+
+bool Actuator::disable() {
+    return myODrive.runIdle(axis);
+}
+
 void Actuator::setPosition(float pos) {
-    if (myODrive.getControlMode(axis) == 3 && myODrive.getInputMode(axis) == 5) {
-        myODrive.setPosition(axis, pos);
+    if (myODrive.getCurrentState(axis) == 8) {
+        if (myODrive.getControlMode(axis) == 3 && myODrive.getInputMode(axis) == 5) {
+            myODrive.setPosition(axis, pos + pos_home);
+        } else {
+            snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in position control.\n");
+            myUSBSerial.print(sentData);
+        }
     } else {
-        snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in position control.\n");
-        myUSBSerial.print(sentData);
+        snprintf(sentData, sizeof(sentData), "Invalid command: the axis is not in closed-loop control.\n");
+            myUSBSerial.print(sentData);
     }
+    
 }
 
 void Actuator::setVelocity(float vel) {
@@ -39,27 +56,36 @@ void Actuator::setTorque(float torque) {
 void Actuator::startPositionControl() {
     myODrive.setControlMode(axis, 3);
     myODrive.setInputMode(axis, 5);
-    snprintf(sentData, sizeof(sentData), "Started position control\n");
+    snprintf(sentData, sizeof(sentData), "Started position control.\n");
     myUSBSerial.print(sentData);
 }
 
 void Actuator::startVelocityControl() {
     myODrive.setControlMode(axis, 2);
     myODrive.setInputMode(axis, 1);
-    snprintf(sentData, sizeof(sentData), "Started velocity control\n");
+    snprintf(sentData, sizeof(sentData), "Started velocity control.\n");
     myUSBSerial.print(sentData);
 }
 
 void Actuator::startTorqueControl() {
     myODrive.setControlMode(axis, 1);
     myODrive.setInputMode(axis, 1);
-    snprintf(sentData, sizeof(sentData), "Started torque control\n");
+    snprintf(sentData, sizeof(sentData), "Started torque control.\n");
+    myUSBSerial.print(sentData);
+}
+
+void Actuator::setHome() {
+    pos_home = myODrive.getPosition(axis);
+    Actuator::getPosition();
+    homed = true;
+    snprintf(sentData, sizeof(sentData), "Home position set.\n");
     myUSBSerial.print(sentData);
 }
 
 float Actuator::getPosition() {
-    position = myODrive.getPosition(axis);
-    return position;
+    pos_abs = myODrive.getPosition(axis);
+    pos_rel = pos_abs - pos_home;
+    return pos_rel;
 }
 
 float Actuator::getVelocity() {
