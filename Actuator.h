@@ -8,28 +8,37 @@ class Actuator {
   private:
     ODrive myODrive;        // ODrive object to call member functions
     uint8_t axis;           // index of the control axis (0 or 1) on the ODrive
-    float position;         // position of the motor in encoder counts
-    float velocity;         // velocity of the motor in encoder counts/s
-    float current;          // currrent draw of the motor in amps
-    bool calibrated;        // (ODrive.axis.motor.config.pre_calibrated && ODrive.axis.encoder.config.pre_calibrated)
-    bool ready;             // true if calibrated and all configs set successfully, false if else
+    usb_serial_class & myUSBSerial = Serial;
+    char sentData[128] = "";
+
+    float position;         // motor position (turns)
+    float velocity;         // motor velocity (turns/s)
+    float current;          // motor current draw (amps)
+    float torque;           // motor torque (Nm)
+
+    uint32_t error;         // ODrive error
 
   public:
-    //Alternate constructor with given parameters
-    Actuator(ODrive & givenODrive, uint8_t givenAxis);
+    // alternate constructor
+    Actuator(const ODrive & givenODrive, uint8_t givenAxis, usb_serial_class & usbSerial);
 
-    //Destructor
-    ~Actuator();             
+    // actuator control functions
+    void setPosition(float pos);  // sends a position command to the ODrive
+    void setVelocity(float vel);  // sends a velocity command to the ODrive
+    void setTorque(float torque); // sends a torque command to the ODrive
 
-    bool initActuator();
+    void startPositionControl();  // sets control and input modes for position control
+    void startVelocityControl();  // sets control and input modes for velocity control
+    void startTorqueControl();    // sets control and input modes for torque control
 
-    float getPosition();              // returns the motor position
-    float getVelocity();              // returns the motor velocity
-    float getCurrent();               // returns the motor current draw
-    bool isCalibrated() ;             // returns true if the motor and encoder are calibrated
-    void setPosition(float pos);      // sends a position command to the ODrive
-    void setVelocity(float vel);      // sends a velocity command to the ODrive
-    void moveToHome() const;          // moves to the zero position
+    // actuator read functions
+    float getPosition();          // returns the motor position
+    float getVelocity();          // returns the motor velocity
+    float getTorque();            // returns the motor torque
+    float getCurrent();           // returns the motor current draw
+
+    // actuator system functions
+    uint32_t getError();          // returns the axis error if any
 };
 
 #endif

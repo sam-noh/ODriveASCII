@@ -9,8 +9,6 @@ ODrive::ODrive(usb_serial_class & usbSerial, HardwareSerial & serial, uint32_t b
     mySerial.begin(baud);
 }
 
-ODrive::~ODrive() {}
-
 // helper functions
 String ODrive::readString() {
     String str = "";

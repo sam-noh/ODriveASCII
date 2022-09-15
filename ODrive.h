@@ -14,10 +14,7 @@ class ODrive {
         String readString();
 
     public:
-
         ODrive(usb_serial_class & usbSerial, HardwareSerial & serial, uint32_t baud);
-
-        ~ODrive();
 
         // helper functions
         float readFloat();
@@ -41,7 +38,7 @@ class ODrive {
         // motor command functions
         void setPosition(uint8_t axis, float pos) const;            // sends a position command to the ODrive
         void setVelocity(uint8_t axis, float vel) const;            // sends a velocity command to the ODrive
-        void setTorque(uint8_t axis, float vel) const;              // sends a torque command to the ODrive
+        void setTorque(uint8_t axis, float torque) const;              // sends a torque command to the ODrive
 
         // state/controller read functions
         uint8_t getCurrentState(uint8_t axis);  // returns the current axis state
