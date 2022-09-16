@@ -5,6 +5,8 @@ Actuator::Actuator(const ODrive & givenODrive, uint8_t givenAxis, usb_serial_cla
     pos_abs = 0;
     pos_rel = 0;
     pos_home = 0;
+    pos_min = FLT_MIN;
+    pos_max = FLT_MAX;
     velocity = 0;
     current = 0;
     torque = 0;
@@ -23,7 +25,13 @@ bool Actuator::disable() {
 void Actuator::setPosition(float pos) {
     if (myODrive.getCurrentState(axis) == 8) {
         if (myODrive.getControlMode(axis) == 3 && myODrive.getInputMode(axis) == 5) {
-            myODrive.setPosition(axis, pos + pos_home);
+            if (pos > pos_min && pos < pos_max) {
+                myODrive.setPosition(axis, pos + pos_home);
+            } else {
+                snprintf(sentData, sizeof(sentData), "Invalid command: the requested position is outside of the limits.\n");
+                myUSBSerial.print(sentData);
+            }
+            
         } else {
             snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in position control.\n");
             myUSBSerial.print(sentData);
@@ -82,6 +90,18 @@ void Actuator::setHome() {
     myUSBSerial.print(sentData);
 }
 
+void Actuator::setMinPos(float pos) {
+    pos_min = pos;
+    snprintf(sentData, sizeof(sentData), "Minimum position set.\n");
+    myUSBSerial.print(sentData);
+}
+
+void Actuator::setMaxPos(float pos) {
+    pos_max = pos;
+    snprintf(sentData, sizeof(sentData), "Maximum position set.\n");
+    myUSBSerial.print(sentData);
+}
+
 float Actuator::getPosition() {
     pos_abs = myODrive.getPosition(axis);
     pos_rel = pos_abs - pos_home;
@@ -101,6 +121,14 @@ float Actuator::getTorque() {
 float Actuator::getCurrent() {
     current = myODrive.getCurrent(axis);
     return current;
+}
+
+float Actuator::getMinPos() {
+    return pos_min;
+}
+
+float Actuator::getMaxPos() {
+    return pos_max;
 }
 
 uint32_t Actuator::getError() {

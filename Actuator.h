@@ -2,6 +2,7 @@
 #define Actuator_h
 
 #include "ODrive.h"
+#include "float.h"
 
 class Actuator {
 
@@ -17,6 +18,8 @@ class Actuator {
     float pos_abs;          // motor position reported by the ODrive after powerup (turns)
     float pos_rel;          // pos_rel = pos_abs - pos_home (turns)
     float pos_home;         // pos_abs at home; call setHomePosition()
+    float pos_min;          // minimum allowed pos_rel
+    float pos_max;          // maximum allowed pos_rel
     float velocity;         // motor velocity (turns/s)
     float current;          // motor current draw (amps)
     float torque;           // motor torque (Nm)
@@ -41,12 +44,17 @@ class Actuator {
     void startTorqueControl();    // sets control and input modes for torque control
 
     void setHome();               // sets the current pos_abs as pos_home
+    void setMinPos(float pos);    // sets pos_min
+    void setMaxPos(float pos);    // sets pos_max
 
     // actuator read functions
     float getPosition();          // queries pos_abs from ODrive, computes pos_rel, and returns pos_rel
     float getVelocity();          // returns the motor velocity
     float getTorque();            // returns the motor torque
     float getCurrent();           // returns the motor current draw
+
+    float getMinPos();            // returns pos_min
+    float getMaxPos();            // returns pos_max
 
     // actuator system functions
     uint32_t getError();          // returns the axis error if any
