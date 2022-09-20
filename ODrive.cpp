@@ -256,15 +256,9 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
     snprintf(sentData, sizeof(sentData), "Homing axis %d...\n", axis+1);
     myUSBSerial.print(sentData);
 
-    // switch to velocity control mode for homing
-    ODrive::setControlMode(axis, 2);    // velocity control
-    ODrive::setInputMode(axis, 1);      // passthrough input
-    snprintf(sentData, sizeof(sentData), "Control mode set to velocity control.\nInput mode set to passthrough.\n\n");
-    myUSBSerial.print(sentData);
+    ODrive::switchToVelocityControl(axis);  // switch to velocity control mode for homing
 
     if (ODrive::runClosedLoopControl(axis)) {
-        snprintf(sentData, sizeof(sentData), "%f %f\n", ODrive::getPosition(axis), ODrive::getVelocity(axis));
-        myUSBSerial.print(sentData);
         ODrive::setVelocity(axis, homingVelocity);      // move slowly towards the joint limit
         snprintf(sentData, sizeof(sentData), "Moving to joint limit...\n\n");
         myUSBSerial.print(sentData);
@@ -273,15 +267,15 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
             if (abs(ODrive::getVelocity(axis)) < 0.05) { // if the motor has slowed due to the joint limit
                 myUSBSerial.print("At joint limit.\n");
                 ODrive::setVelocity(axis, 0);           // stop the motor
-                ODrive::setControlMode(axis, 3);        // position control
-                ODrive::setInputMode(axis, 5);          // trapezoidal trajectory input
-                myUSBSerial.print("Moving to homing offset...\n\n");
+                ODrive::switchToPositionControl(axis);
 
+                myUSBSerial.print("Moving to homing offset...\n\n");
                 snprintf(sentData, sizeof(sentData), "Currently at position: %f\n", ODrive::getPosition(axis));
                 myUSBSerial.print(sentData);
                 float newPos = ODrive::getPosition(axis) + homingOffset;
                 snprintf(sentData, sizeof(sentData), "Moving to: %f\n", newPos);
                 myUSBSerial.print(sentData);
+
                 ODrive::setPosition(axis, newPos);    // move to the homing offset position
                 delay(200);
                 while (abs(ODrive::getPosition(axis) - newPos) > 0.15) {    // wait for the motor to move to the offset
@@ -306,6 +300,27 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
 void ODrive::clearErrors() {                     // clears any ODrive errors
     mySerial << "w axis" << 0 << "error " << 0 << '\n';
     mySerial << "w axis" << 1 << "error " << 0 << '\n';
+}
+
+void ODrive::switchToPositionControl(uint8_t axis) {
+    ODrive::setControlMode(axis, 3);
+    ODrive::setInputMode(axis, 5);
+    snprintf(sentData, sizeof(sentData), "Control mode set to position control.\nInput mode set to trapezoidal trajectory.\n\n");
+    myUSBSerial.print(sentData);
+}
+
+void ODrive::switchToVelocityControl(uint8_t axis) {
+    ODrive::setControlMode(axis, 2);
+    ODrive::setInputMode(axis, 1);
+    snprintf(sentData, sizeof(sentData), "Control mode set to velocity control.\nInput mode set to passthrough.\n\n");
+    myUSBSerial.print(sentData);
+}
+
+void ODrive::switchToTorqueControl(uint8_t axis) {
+    ODrive::setControlMode(axis, 1);
+    ODrive::setInputMode(axis, 1);
+    snprintf(sentData, sizeof(sentData), "Control mode set to torque control.\nInput mode set to passthrough.\n\n");
+    myUSBSerial.print(sentData);
 }
 
 void ODrive::setControlMode(uint8_t axis, uint8_t mode) {

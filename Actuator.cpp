@@ -61,25 +61,16 @@ void Actuator::setTorque(float torque) {
     }
 }
 
-void Actuator::startPositionControl() {
-    myODrive.setControlMode(axis, 3);
-    myODrive.setInputMode(axis, 5);
-    snprintf(sentData, sizeof(sentData), "Started position control.\n");
-    myUSBSerial.print(sentData);
+void Actuator::switchToPositionControl() {
+    myODrive.switchToPositionControl(axis);
 }
 
-void Actuator::startVelocityControl() {
-    myODrive.setControlMode(axis, 2);
-    myODrive.setInputMode(axis, 1);
-    snprintf(sentData, sizeof(sentData), "Started velocity control.\n");
-    myUSBSerial.print(sentData);
+void Actuator::switchToVelocityControl() {
+    myODrive.switchToVelocityControl(axis);
 }
 
-void Actuator::startTorqueControl() {
-    myODrive.setControlMode(axis, 1);
-    myODrive.setInputMode(axis, 1);
-    snprintf(sentData, sizeof(sentData), "Started torque control.\n");
-    myUSBSerial.print(sentData);
+void Actuator::switchToTorqueControl() {
+    myODrive.switchToTorqueControl(axis);
 }
 
 void Actuator::setHome() {

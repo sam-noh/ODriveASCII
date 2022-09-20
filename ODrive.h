@@ -38,12 +38,12 @@ class ODrive {
         // motor command functions
         void setPosition(uint8_t axis, float pos) const;            // sends a position command to the ODrive
         void setVelocity(uint8_t axis, float vel) const;            // sends a velocity command to the ODrive
-        void setTorque(uint8_t axis, float torque) const;              // sends a torque command to the ODrive
+        void setTorque(uint8_t axis, float torque) const;           // sends a torque command to the ODrive
 
         // state/controller read functions
         uint8_t getCurrentState(uint8_t axis);  // returns the current axis state
         uint32_t getAxisError(uint8_t axis);    // returns the axis error if any
-        bool isCalibrated(uint8_t axis);       // returns true if the motor and encoder are calibrated
+        bool isCalibrated(uint8_t axis);        // returns true if the motor and encoder are calibrated
 
         uint8_t getControlMode(uint8_t axis);
         uint8_t getInputMode(uint8_t axis);
@@ -65,6 +65,10 @@ class ODrive {
         bool runClosedLoopControl(uint8_t axis);
         bool runHoming(uint8_t axis, float homingVelocity, float homingOffset);
         void clearErrors();                     // clears errors if any
+
+        void switchToPositionControl(uint8_t axis);
+        void switchToVelocityControl(uint8_t axis);
+        void switchToTorqueControl(uint8_t axis);
 
         void setControlMode(uint8_t axis, uint8_t mode);
         void setInputMode(uint8_t axis, uint8_t mode);

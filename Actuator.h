@@ -39,9 +39,11 @@ class Actuator {
     void setVelocity(float vel);  // sends a velocity command to the ODrive
     void setTorque(float torque); // sends a torque command to the ODrive
 
-    void startPositionControl();  // sets control and input modes for position control
-    void startVelocityControl();  // sets control and input modes for velocity control
-    void startTorqueControl();    // sets control and input modes for torque control
+    // does NOT enter closed-loop control; only changes control mode and input mode
+    // enable() must be called to enter closed-loop control
+    void switchToPositionControl();  // sets control and input modes for position control
+    void switchToVelocityControl();  // sets control and input modes for velocity control
+    void switchToTorqueControl();    // sets control and input modes for torque control
 
     void setHome();               // sets the current pos_abs as pos_home
     void setMinPos(float pos);    // sets pos_min
