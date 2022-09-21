@@ -21,8 +21,9 @@ String ODrive::readString() {
             }
         }
         c = mySerial.read();
-        if (c == '\n')
+        if (c == '\n') {
             break;
+        }
         str += c;
     }
     return str;
@@ -258,7 +259,11 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
 
     ODrive::switchToVelocityControl(axis);  // switch to velocity control mode for homing
 
-    if (ODrive::runClosedLoopControl(axis)) {
+    if (ODrive::getCurrentState(axis) != 8) {
+        ODrive::runClosedLoopControl(axis);
+    }
+
+    if (ODrive::getCurrentState(axis) == 8) {
         ODrive::setVelocity(axis, homingVelocity);      // move slowly towards the joint limit
         snprintf(sentData, sizeof(sentData), "Moving to joint limit...\n\n");
         myUSBSerial.print(sentData);

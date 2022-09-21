@@ -5,8 +5,8 @@ Actuator::Actuator(const ODrive & givenODrive, uint8_t givenAxis, usb_serial_cla
     pos_abs = 0;
     pos_rel = 0;
     pos_home = 0;
-    pos_min = FLT_MIN;
-    pos_max = FLT_MAX;
+    pos_min = -1;
+    pos_max = 150;
     velocity = 0;
     current = 0;
     torque = 0;
@@ -15,11 +15,20 @@ Actuator::Actuator(const ODrive & givenODrive, uint8_t givenAxis, usb_serial_cla
 }
 
 bool Actuator::enable() {
-    return myODrive.runClosedLoopControl(axis);
+    if (myODrive.getCurrentState(axis) != 8) {      // from Discord #communication: only request states to change
+        return myODrive.runClosedLoopControl(axis);
+    } else {
+        return true;
+    }
 }
 
 bool Actuator::disable() {
-    return myODrive.runIdle(axis);
+    if (myODrive.getCurrentState(axis) != 1) {
+        return myODrive.runIdle(axis);
+    } else {
+        return true;
+    }
+    
 }
 
 void Actuator::setPosition(float pos) {
@@ -28,7 +37,7 @@ void Actuator::setPosition(float pos) {
             if (pos > pos_min && pos < pos_max) {
                 myODrive.setPosition(axis, pos + pos_home);
             } else {
-                snprintf(sentData, sizeof(sentData), "Invalid command: the requested position is outside of the limits.\n");
+                snprintf(sentData, sizeof(sentData), "Invalid command: the requested position %.2f is outside of the limits.\n", pos);
                 myUSBSerial.print(sentData);
             }
             
