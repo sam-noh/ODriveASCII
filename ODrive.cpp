@@ -11,7 +11,7 @@ ODrive::ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSer
 // helper functions
 String ODrive::readString() {
     String str = "";
-    static const unsigned long timeout = 1000;
+    static const unsigned long timeout = 50;
     unsigned long timeout_start = millis();
     char c;
     for (;;) {
@@ -21,9 +21,8 @@ String ODrive::readString() {
             }
         }
         c = mySerial.read();
-        if (c == '\n') {
+        if (c == '\n')
             break;
-        }
         str += c;
     }
     return str;

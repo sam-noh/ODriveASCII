@@ -32,42 +32,15 @@ bool Actuator::disable() {
 }
 
 void Actuator::setPosition(float pos) {
-    if (myODrive.getCurrentState(axis) == 8) {
-        if (myODrive.getControlMode(axis) == 3 && myODrive.getInputMode(axis) == 5) {
-            if (pos > pos_min && pos < pos_max) {
-                myODrive.setPosition(axis, pos + pos_home);
-            } else {
-                snprintf(sentData, sizeof(sentData), "Invalid command: the requested position %.2f is outside of the limits.\n", pos);
-                myUSBSerial.print(sentData);
-            }
-            
-        } else {
-            snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in position control.\n");
-            myUSBSerial.print(sentData);
-        }
-    } else {
-        snprintf(sentData, sizeof(sentData), "Invalid command: the axis is not in closed-loop control.\n");
-            myUSBSerial.print(sentData);
-    }
-    
+    myODrive.setPosition(axis, pos + pos_home);
 }
 
 void Actuator::setVelocity(float vel) {
-    if (myODrive.getControlMode(axis) == 2 && myODrive.getInputMode(axis) == 1) {
-        myODrive.setVelocity(axis, vel);
-    } else {
-        snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in velocity control.\n");
-        myUSBSerial.print(sentData);
-    }
+    myODrive.setVelocity(axis, vel);
 }
 
 void Actuator::setTorque(float torque) {
-    if (myODrive.getControlMode(axis) == 1 && myODrive.getInputMode(axis) == 1) {
-        myODrive.setTorque(axis, torque);
-    } else {
-        snprintf(sentData, sizeof(sentData), "Invalid command: the actuator is not in torque control.\n");
-        myUSBSerial.print(sentData);
-    }
+    myODrive.setTorque(axis, torque);
 }
 
 void Actuator::switchToPositionControl() {
