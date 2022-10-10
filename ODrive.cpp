@@ -11,18 +11,20 @@ ODrive::ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSer
 // helper functions
 String ODrive::readString() {
     String str = "";
-    static const unsigned long timeout = 50;
+    static const unsigned long timeout = 10;    // for noisy UART, don't lower this too much
     unsigned long timeout_start = millis();
     char c;
     for (;;) {
         while (!mySerial.available()) {
             if (millis() - timeout_start >= timeout) {
+                myUSBSerial.println("timed out\n");
                 return str;
             }
         }
         c = mySerial.read();
-        if (c == '\n')
+        if (c == '\n') {
             break;
+        }
         str += c;
     }
     return str;
@@ -128,8 +130,6 @@ bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encod
         snprintf(sentData, sizeof(sentData), "Motor is not calibrated.\n");
         myUSBSerial.print(sentData);
     }
-
-    delay(50);  // seems to be necessary to not overload serial prints and comms
 
     mySerial << "r axis" << axis << ".encoder.is_ready\n";
     int encoderCalibration = ODrive::readInt();
@@ -291,7 +291,7 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
                 myUSBSerial.print(sentData);
                 return true;
             }
-            delay(10);  // querying too often can miss the data
+            delay(10);
         }
     } else{
         return false;
