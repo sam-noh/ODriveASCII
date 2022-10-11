@@ -1,15 +1,15 @@
-#include "ODrive.h"
+#include "ODriveASCII.h"
 
 template<class T> inline Print& operator <<(Print &obj,     T arg) { obj.print(arg);    return obj; }
 template<>        inline Print& operator <<(Print &obj, float arg) { obj.print(arg, 4); return obj; }
 
 // alternate constructor
-ODrive::ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial): mySerial(serial), myUSBSerial(usbSerial) {
+ODriveASCII::ODriveASCII(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial): mySerial(serial), myUSBSerial(usbSerial) {
     mySerial.begin(baud);   // usb_serial_class.begin() is run once in the main code, not here
 }
 
 // helper functions
-String ODrive::readString() {
+String ODriveASCII::readString() {
     String str = "";
     static const unsigned long timeout = 10;    // for noisy UART, don't lower this too much
     unsigned long timeout_start = millis();
@@ -30,98 +30,98 @@ String ODrive::readString() {
     return str;
 }
 
-float ODrive::readFloat() {
+float ODriveASCII::readFloat() {
     return readString().toFloat();
 }
 
-int32_t ODrive::readInt() {
+int32_t ODriveASCII::readInt() {
     return readString().toInt();
 }
 
 // system behaviors
-bool ODrive::ready() {              // checks for calibration of both axes and enters closed-loop control
-    return ODrive::isCalibrated(0) & ODrive::isCalibrated(1);
-    // if (ODrive::isCalibrated(0) & ODrive::isCalibrated(1)) {
-    //     return ODrive::runClosedLoopControl(0) & ODrive::runClosedLoopControl(1);
+bool ODriveASCII::ready() {              // checks for calibration of both axes and enters closed-loop control
+    return ODriveASCII::isCalibrated(0) & ODriveASCII::isCalibrated(1);
+    // if (ODriveASCII::isCalibrated(0) & ODriveASCII::isCalibrated(1)) {
+    //     return ODriveASCII::runClosedLoopControl(0) & ODriveASCII::runClosedLoopControl(1);
     // } else {
     //     return false;
     // }
 }
 
-bool ODrive::stop() {               // enters idle state on both axes
-    return ODrive::runIdle(0) & ODrive::runIdle(1);
+bool ODriveASCII::stop() {               // enters idle state on both axes
+    return ODriveASCII::runIdle(0) & ODriveASCII::runIdle(1);
 }
 
-void ODrive::reboot() {             // reboots the ODrive
+void ODriveASCII::reboot() {             // reboots the ODrive
     mySerial << "sr\n";
 }
 
 // system read functions
-float ODrive::getBusVoltage() {     // returns the bus voltage of the ODrive
+float ODriveASCII::getBusVoltage() {     // returns the bus voltage of the ODrive
     mySerial << "r vbus_voltage\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getBusCurrent() {     // returns the bus current of the ODrive
+float ODriveASCII::getBusCurrent() {     // returns the bus current of the ODrive
     mySerial << "r ibus\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
 // motor read functions
-float ODrive::getPosition(uint8_t axis) {       // returns the motor position
+float ODriveASCII::getPosition(uint8_t axis) {       // returns the motor position
     mySerial << "r axis" << axis << ".encoder.pos_estimate\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getVelocity(uint8_t axis) {       // returns the motor velocity
+float ODriveASCII::getVelocity(uint8_t axis) {       // returns the motor velocity
     mySerial << "r axis" << axis << ".encoder.vel_estimate\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getTorque(uint8_t axis) {         // returns the motor torque
+float ODriveASCII::getTorque(uint8_t axis) {         // returns the motor torque
     mySerial << "r axis" << axis << ".motor.current_control.Iq_measured\n";
-    float current = ODrive::readFloat();
+    float current = ODriveASCII::readFloat();
 
     mySerial << "r axis" << axis << ".motor.config.torque_constant\n";
-    float torque_constant = ODrive::readFloat();
+    float torque_constant = ODriveASCII::readFloat();
 
     return current*torque_constant;
 }
 
-float ODrive::getCurrent(uint8_t axis) {        // returns the motor current draw
+float ODriveASCII::getCurrent(uint8_t axis) {        // returns the motor current draw
     mySerial << "r axis" << axis << ".motor.current_control.Iq_measured\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
 // motor command functions
-void ODrive::setPosition(uint8_t axis, float pos) const {       // sends a position command to the ODrive
+void ODriveASCII::setPosition(uint8_t axis, float pos) const {       // sends a position command to the ODrive
     mySerial << "q " << axis << " " << pos << "\n";
 }
 
-void ODrive::setVelocity(uint8_t axis, float vel) const {       // sends a velocity command to the ODrive
+void ODriveASCII::setVelocity(uint8_t axis, float vel) const {       // sends a velocity command to the ODrive
     mySerial << "v " << axis << " " << vel << "\n";
 }
 
-void ODrive::setTorque(uint8_t axis, float torque) const {      // sends a torque command to the ODrive
+void ODriveASCII::setTorque(uint8_t axis, float torque) const {      // sends a torque command to the ODrive
     mySerial << "c " << axis << " " << torque << "\n";
 }
 
 // state/controller read functions
-uint8_t ODrive::getCurrentState(uint8_t axis) { // returns the current axis state
+uint8_t ODriveASCII::getCurrentState(uint8_t axis) { // returns the current axis state
     mySerial << "r axis" << axis << ".current_state\n";
-    return ODrive::readInt();
+    return ODriveASCII::readInt();
 }
 
-uint32_t ODrive::getAxisError(uint8_t axis) { // returns the axis error if any
+uint32_t ODriveASCII::getAxisError(uint8_t axis) { // returns the axis error if any
     mySerial << "r axis" << axis << ".error\n";
-    return ODrive::readInt();
+    return ODriveASCII::readInt();
 }
 
-bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encoder are calibrated
+bool ODriveASCII::isCalibrated(uint8_t axis) { // returns true if the motor and encoder are calibrated
     snprintf(sentData, sizeof(sentData), "Checking axis %d calibration...\n", axis+1);
     myUSBSerial.print(sentData);
     mySerial << "r axis" << axis << ".motor.is_calibrated\n";
-    int motorCalibration = ODrive::readInt();
+    int motorCalibration = ODriveASCII::readInt();
 
     if (motorCalibration) {
         snprintf(sentData, sizeof(sentData), "Motor is calibrated.\n");
@@ -132,7 +132,7 @@ bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encod
     }
 
     mySerial << "r axis" << axis << ".encoder.is_ready\n";
-    int encoderCalibration = ODrive::readInt();
+    int encoderCalibration = ODriveASCII::readInt();
 
     if (encoderCalibration) {
         snprintf(sentData, sizeof(sentData), "Encoder is calibrated.\n\n");
@@ -144,58 +144,58 @@ bool ODrive::isCalibrated(uint8_t axis) { // returns true if the motor and encod
     return motorCalibration && encoderCalibration;
 }
 
-uint8_t ODrive::getControlMode(uint8_t axis) {
+uint8_t ODriveASCII::getControlMode(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.control_mode\n";
-    return ODrive::readInt();
+    return ODriveASCII::readInt();
 }
 
-uint8_t ODrive::getInputMode(uint8_t axis) {
+uint8_t ODriveASCII::getInputMode(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.input_mode\n";
-    return ODrive::readInt();
+    return ODriveASCII::readInt();
 }
 
-float ODrive::getCurrentLim(uint8_t axis) {
+float ODriveASCII::getCurrentLim(uint8_t axis) {
     mySerial << "r axis" << axis << ".motor.config.current_lim\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getVelLim(uint8_t axis) {
+float ODriveASCII::getVelLim(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.vel_limit\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getPosGain(uint8_t axis) {
+float ODriveASCII::getPosGain(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.pos_gain\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getVelGain(uint8_t axis) {
+float ODriveASCII::getVelGain(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.vel_gain\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getVelIntGain(uint8_t axis) {
+float ODriveASCII::getVelIntGain(uint8_t axis) {
     mySerial << "r axis" << axis << ".controller.config.vel_integrator_gain\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getTrapAccelLim(uint8_t axis) {
+float ODriveASCII::getTrapAccelLim(uint8_t axis) {
     mySerial << "r axis" << axis << ".trap_traj.config.accel_limit\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getTrapDecelLim(uint8_t axis) {
+float ODriveASCII::getTrapDecelLim(uint8_t axis) {
     mySerial << "r axis" << axis << ".trap_traj.config.decel_limit\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
-float ODrive::getTrapVelLim(uint8_t axis) {
+float ODriveASCII::getTrapVelLim(uint8_t axis) {
     mySerial << "r axis" << axis << ".trap_traj.config.vel_limit\n";
-    return ODrive::readFloat();
+    return ODriveASCII::readFloat();
 }
 
 // state/controller write functions
-bool ODrive::runState(uint8_t axis, uint8_t requested_state, bool wait_for_idle, float timeout) {
+bool ODriveASCII::runState(uint8_t axis, uint8_t requested_state, bool wait_for_idle, float timeout) {
     int timeout_ctr = (int)(timeout * 10.0f);
     mySerial << "w axis" << axis << ".requested_state " << requested_state << '\n';
     if (wait_for_idle) {
@@ -208,8 +208,8 @@ bool ODrive::runState(uint8_t axis, uint8_t requested_state, bool wait_for_idle,
     return timeout_ctr > 0;
 }
 
-bool ODrive::runIdle(uint8_t axis) {
-    bool success =  ODrive::runState(axis, 1, true, 10.0f);
+bool ODriveASCII::runIdle(uint8_t axis) {
+    bool success =  ODriveASCII::runState(axis, 1, true, 10.0f);
 
     if (success) {
         snprintf(sentData, sizeof(sentData), "Axis %d in idle state.\n", axis+1);
@@ -221,8 +221,8 @@ bool ODrive::runIdle(uint8_t axis) {
     return success;
 }
 
-bool ODrive::runFullCalibration(uint8_t axis) {
-    bool success = ODrive::runState(axis, 3, true, 10.0f);
+bool ODriveASCII::runFullCalibration(uint8_t axis) {
+    bool success = ODriveASCII::runState(axis, 3, true, 10.0f);
     
     if (success) {
         snprintf(sentData, sizeof(sentData), "Axis %d calibrated successfully.\n", axis+1);
@@ -238,8 +238,8 @@ bool ODrive::runFullCalibration(uint8_t axis) {
     return success;
 }
 
-bool ODrive::runClosedLoopControl(uint8_t axis) {
-    bool success = ODrive::runState(axis, 8, false);
+bool ODriveASCII::runClosedLoopControl(uint8_t axis) {
+    bool success = ODriveASCII::runState(axis, 8, false);
     
     if (success) {
         snprintf(sentData, sizeof(sentData), "Axis %d in closed-loop control.\n", axis+1);
@@ -251,41 +251,41 @@ bool ODrive::runClosedLoopControl(uint8_t axis) {
     return success;
 }
 
-bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
-    // return ODrive::runState(axis, 11, true, 30.0f);      // ODrive's homing feature requires limit sensors
+bool ODriveASCII::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
+    // return ODriveASCII::runState(axis, 11, true, 30.0f);      // ODrive's homing feature requires limit sensors
     snprintf(sentData, sizeof(sentData), "Homing axis %d...\n", axis+1);
     myUSBSerial.print(sentData);
 
-    ODrive::switchToVelocityControl(axis);  // switch to velocity control mode for homing
+    ODriveASCII::switchToVelocityControl(axis);  // switch to velocity control mode for homing
 
-    if (ODrive::getCurrentState(axis) != 8) {
-        ODrive::runClosedLoopControl(axis);
+    if (ODriveASCII::getCurrentState(axis) != 8) {
+        ODriveASCII::runClosedLoopControl(axis);
     }
 
-    if (ODrive::getCurrentState(axis) == 8) {
-        ODrive::setVelocity(axis, homingVelocity);      // move slowly towards the joint limit
+    if (ODriveASCII::getCurrentState(axis) == 8) {
+        ODriveASCII::setVelocity(axis, homingVelocity);      // move slowly towards the joint limit
         snprintf(sentData, sizeof(sentData), "Moving to joint limit...\n\n");
         myUSBSerial.print(sentData);
         delay(300);                                     // don't check endstop condition when the motor starts
         while (true) {
-            if (abs(ODrive::getVelocity(axis)) < 0.05) { // if the motor has slowed due to the joint limit
+            if (abs(ODriveASCII::getVelocity(axis)) < 0.05) { // if the motor has slowed due to the joint limit
                 myUSBSerial.print("At joint limit.\n");
-                ODrive::setVelocity(axis, 0);           // stop the motor
-                ODrive::switchToPositionControl(axis);
+                ODriveASCII::setVelocity(axis, 0);           // stop the motor
+                ODriveASCII::switchToPositionControl(axis);
 
                 myUSBSerial.print("Moving to homing offset...\n\n");
-                snprintf(sentData, sizeof(sentData), "Currently at position: %f\n", ODrive::getPosition(axis));
+                snprintf(sentData, sizeof(sentData), "Currently at position: %f\n", ODriveASCII::getPosition(axis));
                 myUSBSerial.print(sentData);
-                float newPos = ODrive::getPosition(axis) + homingOffset;
+                float newPos = ODriveASCII::getPosition(axis) + homingOffset;
                 snprintf(sentData, sizeof(sentData), "Moving to: %f\n", newPos);
                 myUSBSerial.print(sentData);
 
-                ODrive::setPosition(axis, newPos);    // move to the homing offset position
+                ODriveASCII::setPosition(axis, newPos);    // move to the homing offset position
                 delay(200);
-                while (abs(ODrive::getPosition(axis) - newPos) > 0.15) {    // wait for the motor to move to the offset
+                while (abs(ODriveASCII::getPosition(axis) - newPos) > 0.15) {    // wait for the motor to move to the offset
                     delay(10);
                 }
-                ODrive::runIdle(axis);  // enter idle mode after homing
+                ODriveASCII::runIdle(axis);  // enter idle mode after homing
 
                 snprintf(sentData, sizeof(sentData), "Axis %d successfully homed.\n\n", axis+1);
                 myUSBSerial.print(sentData);
@@ -301,68 +301,68 @@ bool ODrive::runHoming(uint8_t axis, float homingVelocity, float homingOffset) {
 
 }
 
-void ODrive::clearErrors() {                     // clears any ODrive errors
+void ODriveASCII::clearErrors() {                     // clears any ODrive errors
     mySerial << "w axis" << 0 << "error " << 0 << '\n';
     mySerial << "w axis" << 1 << "error " << 0 << '\n';
 }
 
-void ODrive::switchToPositionControl(uint8_t axis) {
-    ODrive::setControlMode(axis, 3);
-    ODrive::setInputMode(axis, 5);
+void ODriveASCII::switchToPositionControl(uint8_t axis) {
+    ODriveASCII::setControlMode(axis, 3);
+    ODriveASCII::setInputMode(axis, 5);
     snprintf(sentData, sizeof(sentData), "Control mode set to position control.\nInput mode set to trapezoidal trajectory.\n\n");
     myUSBSerial.print(sentData);
 }
 
-void ODrive::switchToVelocityControl(uint8_t axis) {
-    ODrive::setControlMode(axis, 2);
-    ODrive::setInputMode(axis, 1);
+void ODriveASCII::switchToVelocityControl(uint8_t axis) {
+    ODriveASCII::setControlMode(axis, 2);
+    ODriveASCII::setInputMode(axis, 1);
     snprintf(sentData, sizeof(sentData), "Control mode set to velocity control.\nInput mode set to passthrough.\n\n");
     myUSBSerial.print(sentData);
 }
 
-void ODrive::switchToTorqueControl(uint8_t axis) {
-    ODrive::setControlMode(axis, 1);
-    ODrive::setInputMode(axis, 1);
+void ODriveASCII::switchToTorqueControl(uint8_t axis) {
+    ODriveASCII::setControlMode(axis, 1);
+    ODriveASCII::setInputMode(axis, 1);
     snprintf(sentData, sizeof(sentData), "Control mode set to torque control.\nInput mode set to passthrough.\n\n");
     myUSBSerial.print(sentData);
 }
 
-void ODrive::setControlMode(uint8_t axis, uint8_t mode) {
+void ODriveASCII::setControlMode(uint8_t axis, uint8_t mode) {
     mySerial << "w axis" << axis << ".controller.config.control_mode " << mode << '\n';
 }
 
-void ODrive::setInputMode(uint8_t axis, uint8_t mode) {
+void ODriveASCII::setInputMode(uint8_t axis, uint8_t mode) {
     mySerial << "w axis" << axis << ".controller.config.input_mode " << mode << '\n';
 }
 
-void ODrive::setCurrentLim(uint8_t axis, float current) {
+void ODriveASCII::setCurrentLim(uint8_t axis, float current) {
     mySerial << "w axis" << axis << ".motor.config.current_lim " << current << '\n';
 }
 
-void ODrive::setVelLim(uint8_t axis, float vel) {
+void ODriveASCII::setVelLim(uint8_t axis, float vel) {
     mySerial << "w axis" << axis << ".controller.config.vel_limit " << vel << '\n';
 }
 
-void ODrive::setPosGain(uint8_t axis, float gain) {
+void ODriveASCII::setPosGain(uint8_t axis, float gain) {
     mySerial << "w axis" << axis << ".controller.config.pos_gain " << gain << '\n';
 }
 
-void ODrive::setVelGain(uint8_t axis, float gain) {
+void ODriveASCII::setVelGain(uint8_t axis, float gain) {
     mySerial << "w axis" << axis << ".controller.config.vel_gain " << gain << '\n';
 }
 
-void ODrive::setVelIntGain(uint8_t axis, float gain) {
+void ODriveASCII::setVelIntGain(uint8_t axis, float gain) {
     mySerial << "w axis" << axis << ".controller.config.vel_integrator_gain " << gain << '\n';
 }
 
-void ODrive::setTrapAccelLim(uint8_t axis, float accel) {
+void ODriveASCII::setTrapAccelLim(uint8_t axis, float accel) {
     mySerial << "w axis" << axis << ".trap_traj.config.accel_limit " << accel << '\n';
 }
 
-void ODrive::setTrapDecelLim(uint8_t axis, float decel) {
+void ODriveASCII::setTrapDecelLim(uint8_t axis, float decel) {
     mySerial << "w axis" << axis << ".trap_traj.config.decel_limit " << decel << '\n';
 }
 
-void ODrive::setTrapVelLim(uint8_t axis, float vel) {
+void ODriveASCII::setTrapVelLim(uint8_t axis, float vel) {
     mySerial << "w axis" << axis << ".trap_traj.config.vel_limit " << vel << '\n';
 }

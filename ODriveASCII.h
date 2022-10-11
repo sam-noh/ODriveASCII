@@ -1,10 +1,10 @@
-#ifndef ODrive_h
-#define ODrive_h
+#ifndef ODriveASCII_h
+#define ODriveASCII_h
 
 #include "Arduino.h"
 #include "ODriveEnums.h"
 
-class ODrive {
+class ODriveASCII {
 
     private:
         HardwareSerial & mySerial;
@@ -14,7 +14,7 @@ class ODrive {
         String readString();
 
     public:
-        ODrive(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial);
+        ODriveASCII(HardwareSerial & serial, uint32_t baud, usb_serial_class & usbSerial);
 
         // helper functions
         float readFloat();
